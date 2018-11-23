@@ -10,6 +10,8 @@ const moment = require('moment');
 const Order = require('./models/SalesOrder');
 const Pharmacy = require('./models/pharmacy');
 
+const vpimedicine = require('./models/vpimedicine');
+
 const app = express();
 
 const MONGODB_URI = "mongodb://GiteshMedi:shastri1@ds263590.mlab.com:63590/medicento";
@@ -43,11 +45,47 @@ app.set('view engine', 'ejs');
 app.use(express.static(__dirname + '/public'))
 app.locals.moment = moment;
 
+var active = 'index';
+
+app.use('/history', (req, res, next) => {
+    active = 'history';
+    Order.find().populate('pharmacy_id').exec().then((orders) => {
+        res.render('history', {
+            orders: orders,
+            active: active
+        });
+    }).catch(err => {
+        console.log(err);
+    });
+});
+
+app.use('/inventory', (req, res, next) => {
+    active = 'inventory';
+    vpimedicine.find().exec().then(medicines => {
+        res.render('inventory', {
+            medicines: medicines,
+            active: active
+        });
+    }).catch( err => {
+        console.log(err);
+        res.render('inventory');
+    });
+});
+
+app.use('/marketing', (req, res, next) => {
+    active = 'marketing';
+    res.render('marketing', {
+        active: active
+    });
+});
+
 app.use('/', (req, res, next) => {
+    active = 'index';
     Order.find().populate('pharmacy_id').exec().then((orders) => {
         console.log(orders);
-        res.render('index.ejs', {
-            orders: orders
+        res.render('index', {
+            orders: orders,
+            active: active
         });
     }).catch(err => {
         console.log(err);
