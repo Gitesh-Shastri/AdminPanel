@@ -2,13 +2,17 @@ const nodeoutlook = require('nodejs-nodemailer-outlook');
 const LocalStrategy = require('passport-local');
 const bodyParser = require('body-parser');
 const admin = require("firebase-admin");
+const favicon = require('serve-favicon');
 const passport = require('passport');
 const mongoose = require('mongoose');
 const express = require('express');
 const moment = require('moment');
+const path = require('path');
 
 const Order = require('./models/SalesOrder');
 const Pharmacy = require('./models/pharmacy');
+
+const SalesOrder = require('./models/SalesOrderItem');
 
 const vpimedicine = require('./models/vpimedicine');
 
@@ -31,6 +35,8 @@ app.use(require('express-session')({
     resave: false,
     saveUninitialized: false
 }));
+
+app.use(favicon(path.join(__dirname, 'public/assets/img', 'logo.ico')));
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -81,11 +87,32 @@ app.use('/marketing', (req, res, next) => {
 
 app.use('/', (req, res, next) => {
     active = 'index';
-    Order.find().populate('pharmacy_id').exec().then((orders) => {
-        console.log(orders);
+    activeOrders = [];
+    cancelOrders = [];
+    returnsOrders = [];
+    deliveredOrders = [];
+    Order.find().populate('pharmacy_id').populate('order_items').exec().then((orders) => {
+        orders.forEach( (order) => {
+            if(order.status == 'Active') {
+                activeOrders.push(order);
+            }
+            if(order.status == 'Canceled') {
+                cancelOrders.push(order);
+            }
+            if(order.status == 'Delievered') {
+                deliveredOrders.push(order);
+            }
+            if(order.status == 'Returns') {
+                returnsOrders.push(order);
+            }
+        })
         res.render('index', {
             orders: orders,
-            active: active
+            active: active,
+            activeOrders: activeOrders,
+            cancelOrders: cancelOrders,
+            deliveredOrders: deliveredOrders,
+            returnsOrders: returnsOrders
         });
     }).catch(err => {
         console.log(err);

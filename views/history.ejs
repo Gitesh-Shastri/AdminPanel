@@ -26,7 +26,7 @@
                     <%= order.grand_total %>
                 </td>
                 <td>
-                    <%= moment(time1).format('YYYY/MM/DD hh:mm a') %>
+                    <%= moment(time1).format('YYYY/MM/DD') %>
                 </td>
                 <td>Show Details</td>
                 <td>State</td>
@@ -43,7 +43,7 @@
     // SideNav Initialization
     $(".button-collapse").sideNav();
     new WOW().init();
-    
+
     $(document).ready(function () {
         $('.tableData').DataTable({
             "responsive": true,
@@ -51,9 +51,30 @@
         });
     });
 
-    function showDelivered() {
-        window.alert('hie');
+    // Extend dataTables search
+$.fn.dataTable.ext.search.push(
+    function( settings, data, dataIndex ) {
+        var min  = $('#min-date').val();
+        var max  = $('#max-date').val();
+        var createdAt = data[3] || 0; // Our date column in the table
+
+        if  ( 
+                ( min == "" || max == "" )
+                || 
+                ( moment(createdAt).isSameOrAfter(min) && moment(createdAt).isSameOrBefore(max) ) 
+            )
+        {
+            return true;
+        }
+        return false;
     }
+);
+
+// Re-draw the table when the a date range filter changes
+$('.date-range-filter').change( function() {
+    table.draw();
+} );
+
 </script>
 
 </body>
